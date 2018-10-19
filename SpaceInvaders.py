@@ -32,6 +32,11 @@ backgroundImg = pygame.image.load("si-background.gif")
 enemyImg = pygame.image.load("si-enemy.gif")
 bulletImg = pygame.image.load("si-bullet.gif")
 
+laserSound = pygame.mixer.Sound('laser.wav')
+explosionSound = pygame.mixer.Sound('explode.wav')
+voltageSound = pygame.mixer.Sound('voltage.wav')
+
+
 def isCollision(a, b):
     if a.xcor + a.width > b.xcor and a.xcor < b.xcor + b.width and a.ycor + a.height > b.ycor and a.ycor < b.ycor + b.height:
         return True
