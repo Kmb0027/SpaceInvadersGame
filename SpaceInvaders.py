@@ -1,5 +1,5 @@
 import pygame
-
+import random
 windowWidth = 400
 windowHeight = 600
 gameSideMargin = 10
@@ -10,7 +10,8 @@ wallTop = gameTopMargin + gameBorderWidth
 wallLeft = gameSideMargin + gameBorderWidth
 wallRight = windowWidth - gameSideMargin - gameBorderWidth
 wallBottom = windowHeight - gameBottomMargin - gameBorderWidth
-
+gameSpeed = 60
+enemyShotDelay = 0
 
 black = (0,0,0)
 white = (255, 255, 255)
@@ -31,6 +32,7 @@ playerImg = pygame.image.load("si-player.gif")
 backgroundImg = pygame.image.load("si-background.gif")
 enemyImg = pygame.image.load("si-enemy.gif")
 bulletImg = pygame.image.load("si-bullet.gif")
+#enemyBulletImg = pygame.image.load(".gif")
 
 laserSound = pygame.mixer.Sound('laser.wav')
 explosionSound = pygame.mixer.Sound('explode.wav')
@@ -77,6 +79,10 @@ class Player(GameObject):
         self.direction = -1
     def stopMoving(self):
         self.direction = 0
+    def shoot(self):
+        laserSound.play()
+        newBullet = Bullet(self.xcor + self.width / 2 - bulletImg.get_width() / 2, self.ycor, bulletImg, 10)
+        bullets.append(newBullet)
 
 class Enemy(GameObject):
     def __init__(self, xcor, ycor, image, speed):
@@ -88,6 +94,10 @@ class Enemy(GameObject):
         self.ycor += enemyImg.get_height() / 2
     def changeDirection(self):
         self.direction *= -1
+    def shoot(self):
+        voltageSound.play()
+        newBullet = Bullet(self.xcor + self.width / 2, self.ycor, bulletImg, -2)
+        enemyBullets.append(newBullet)
     @staticmethod
     def createEnemies(level):
         newEnemies = []
@@ -121,6 +131,7 @@ pointPerEnemy = 100
 bullets = []
 enemies = []
 levels = []
+enemyBullets = []
 levels.append(Level(1, 3, 5, 1))
 levels.append(Level(2, 5, 6, 2))
 levels.append(Level(3, 5, 8, 3))
@@ -140,8 +151,7 @@ while player.isAlive:
             elif event.key == pygame.K_RIGHT:
                 player.moverRight()
             elif event.key == pygame.K_SPACE:
-                newBullet = Bullet(player.xcor + player.width / 2 - bulletImg.get_width() / 2, player.ycor, bulletImg, 10)
-                bullets.append(newBullet)
+                player.shoot()
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
                 player.stopMoving()
@@ -165,6 +175,7 @@ while player.isAlive:
         for enemy in enemies:
             if isCollision(enemy, bullet):
                 try:
+                    explosionSound.play()
                     enemies.remove(enemy)
                     player.score += pointPerEnemy
                 except ValueError:
@@ -175,10 +186,26 @@ while player.isAlive:
                     pass
                 break
 
+    for bullet in enemyBullets:
+        if bullet.ycor + bullet.height > wallBottom:
+            try:
+                bullets.remove(bullet)
+            except ValueError:
+                pass
+        if isCollision(player, bullet):
+            player.isAlive = False
+
+    enemyShotDelay += 1
     for enemy in enemies:
+        if(enemyShotDelay > 100 and random.randint(1, len(enemies) + 1) == 1):
+            enemy.shoot()
+            enemyShotDelay = 0
         enemy.moveOver()
 
     for bullet in bullets:
+        bullet.move()
+
+    for bullet in enemyBullets:
         bullet.move()
 
     gameDisplay.blit(gameDisplay, (0, 0))
@@ -196,6 +223,8 @@ while player.isAlive:
         enemy.show()
     for bullet in bullets:
         bullet.show()
+    for bullet in enemyBullets:
+        bullet.show()
     
     player.show()
 
@@ -204,6 +233,10 @@ while player.isAlive:
     gameDisplay.blit(titleText, (windowWidth / 2 - titleText.get_width() / 2, 0))
     gameDisplay.blit(scoreText, (wallLeft, wallBottom + gameBorderWidth))
     pygame.display.update()
-    clock.tick(60)
+    clock.tick(gameSpeed)
+
+showEndScreen = True
+while showEndScreen:
+    pass
 pygame.quit()
     
